@@ -1,0 +1,9 @@
+{
+  "name": "soncap-pfi-check",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "formidable": "^3.5.2",
+    "pdf-parse": "1.1.1"
+  }
+}
