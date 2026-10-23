@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PFI SONCAP check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f7f4;
+    --surface: #ffffff;
+    --ink: #17231d;
+    --muted: #5d6b63;
+    --line: #d9dfd9;
+    --green: #146c43;
+    --green-bg: #e3f2ea;
+    --amber: #9a5b00;
+    --amber-bg: #fdf0d5;
+    --accent: #146c43;
+    --focus: #1d5fd1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #101612;
+      --surface: #18201b;
+      --ink: #e8eee9;
+      --muted: #9aa8a0;
+      --line: #2c3a32;
+      --green: #5fc58f;
+      --green-bg: #173a28;
+      --amber: #f0b550;
+      --amber-bg: #3b2c0e;
+      --accent: #5fc58f;
+      --focus: #7aa8ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 16px/1.5 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 28px; line-height: 1.2; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lede { color: var(--muted); margin: 0 0 28px; max-width: 60ch; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
+
+  .drop {
+    display: block;
+    border: 2px dashed var(--line);
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--green-bg); }
+  .drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .drop strong { display: block; font-size: 18px; margin-bottom: 4px; }
+  .drop span { color: var(--muted); font-size: 14px; }
+  .company { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  select { font: 500 15px "IBM Plex Sans", system-ui, sans-serif; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); margin-bottom: 16px; }
+  select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .warn { margin-top: 8px !important; font-size: 14px; }
+  .file-name { margin-top: 10px; font-size: 14px; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+  button {
+    font: 500 15px "IBM Plex Sans", system-ui, sans-serif;
+    padding: 10px 18px;
+    border-radius: 4px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  @media (prefers-color-scheme: dark) { button { color: #0b1a12; } }
+  button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  button.link { background: none; border: none; color: var(--muted); text-decoration: underline; padding: 10px 4px; }
+
+  #status { margin-top: 18px; min-height: 24px; color: var(--muted); font-size: 14px; }
+  #status.error { color: #b3261e; }
+  @media (prefers-color-scheme: dark) { #status.error { color: #ff8a80; } }
+
+  #results { margin-top: 28px; }
+  .banner { border-radius: 6px; padding: 16px 18px; border-left: 6px solid; }
+  .banner h2 { margin: 0 0 4px; font-size: 20px; }
+  .banner p { margin: 0; }
+  .banner.ok { background: var(--green-bg); border-color: var(--green); }
+  .banner.ok h2 { color: var(--green); }
+  .banner.review { background: var(--amber-bg); border-color: var(--amber); }
+  .banner.review h2 { color: var(--amber); }
+
+  .table-wrap { overflow-x: auto; margin-top: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; font-size: 14px; color: var(--muted); }
+  tr:last-child td { border-bottom: none; }
+  .six { font-weight: 500; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 500; }
+  .pill.match { background: var(--green-bg); color: var(--green); }
+  .pill.review { background: var(--amber-bg); color: var(--amber); }
+  .pill.check { background: transparent; color: var(--amber); border: 1px solid var(--amber); }
+  .desc { color: var(--muted); font-size: 13px; }
+  .reason { color: var(--amber); font-size: 13px; margin-top: 4px; }
+  .small-note { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+  details.ignored { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  details.ignored summary { cursor: pointer; }
+  details.ignored summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .next { margin-top: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; }
+  .next h3 { margin: 0 0 8px; font-size: 16px; }
+  .next ul { margin: 0; padding-left: 20px; }
+  .next li { margin-bottom: 6px; }
+  .demo-note { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Check a Proforma Invoice against SONCAP</h1>
+  <p class="lede">Upload the supplier’s PFI as a PDF. We read the HS CODE column (or “Custom Code” column, or codes next to an “HS Code”, “HSN”, “Tariff Code” or “HS -” label) and check the first six digits against the selected company’s SONCAP list. Anything unclear is flagged for you to check.</p>
+
+  <label class="company" for="company">Company SONCAP list</label>
+  <select id="company">
+    <option value="IEPL">IEPL</option>
+    <option value="IEFCL">IEFCL</option>
+    <option value="iCARE">iCARE</option>
+  </select>
+
+  <label class="drop" id="drop">
+    <input type="file" id="file" accept="application/pdf,.pdf">
+    <strong>Choose a PFI PDF</strong>
+    <span>or drag it here</span>
+    <div class="file-name" id="fileName"></div>
+  </label>
+
+  <div class="actions">
+    <button id="check" disabled>Check HSN codes</button>
+    <button id="demo" class="link" type="button">Preview with sample data</button>
+  </div>
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <section id="results" hidden>
+    <div id="banner" class="banner"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>HSN on PFI</th><th>First six digits</th><th>Result</th><th>SONCAP record</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="next" id="next"></div>
+    <p class="demo-note" id="demoNote" hidden>This is sample data, not your document.</p>
+  </section>
+</main>
+
+<script>
+/*
+  Backend contract (/api/verify on Vercel):
+  POST multipart/form-data, fields "pfi" (the PDF) and "company" (IEPL | IEFCL | iCARE)
+  Response 200 JSON:
+  {
+    "allMatched": false,
+    "warning": "optional text" | null,
+    "permits": ["2026DOC..."],
+    "note": "A match only means the code is on the list...",
+    "excluded": [ { "raw": "...", "reason": "..." } ],
+    "codes": [
+      { "raw": "8501.10.00", "normalized": "850110",
+        "status": "match" | "not_in_list" | "review",
+        "source": "column" | "label",
+        "matched": "8501100000" | null,        // full code from the SONCAP json
+        "matchedDescription": "text from the json",
+        "exact": true | false,                  // false = matched on first six digits only
+        "reason": "why it needs review" | null }
+    ]
+  }
+*/
+const API_URL = "/api/verify";
+
+const $ = (id) => document.getElementById(id);
+const fileInput = $("file"), drop = $("drop"), checkBtn = $("check");
+let selected = null;
+
+function setStatus(msg, isError) {
+  const el = $("status");
+  el.textContent = msg || "";
+  el.className = isError ? "error" : "";
+}
+
+function pickFile(f) {
+  if (!f) return;
+  if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
+    setStatus("That file isn’t a PDF. Choose the PFI as a PDF.", true);
+    return;
+  }
+  selected = f;
+  $("fileName").textContent = f.name;
+  checkBtn.disabled = false;
+  setStatus("");
+}
+
+fileInput.addEventListener("change", () => pickFile(fileInput.files[0]));
+["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => pickFile(e.dataTransfer.files[0]));
+
+checkBtn.addEventListener("click", async () => {
+  if (!selected) return;
+  checkBtn.disabled = true;
+  setStatus("Reading the PFI and checking HSN codes…");
+  $("results").hidden = true;
+  try {
+    const body = new FormData();
+    body.append("pfi", selected);
+    body.append("company", $("company").value);
+    const res = await fetch(API_URL, { method: "POST", body });
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error((data && data.error) || "The server returned " + res.status + ".");
+    render(data, false);
+    setStatus("");
+  } catch (err) {
+    setStatus("Couldn’t check this PFI. " + err.message + " If the backend isn’t built yet, use “Preview with sample data”.", true);
+  } finally {
+    checkBtn.disabled = false;
+  }
+});
+
+$("demo").addEventListener("click", () => {
+  setStatus("");
+  render({
+    allMatched: false,
+    warning: null,
+    permits: ["2026DOC0000060402", "2026DOC0000175366", "2026DOC0000122915"],
+    note: "A match only means the code is on the company’s SONCAP HSN list. It does not prove that the product or permit is compliant.",
+    excluded: [{ raw: "0803 123 4567", reason: "Appears next to a PFI, phone, fax, account or similar label." }],
+    codes: [
+      { raw: "8537.20.00", normalized: "853720", status: "match", source: "column", matched: "8537200000", matchedDescription: "Boards, panels, consoles... for electric control/distributi on. For a voltage greater than 1,000 V", exact: true, reason: null },
+      { raw: "8501.10.90", normalized: "850110", status: "match", source: "column", matched: "8501100000", matchedDescription: "", exact: false, reason: null },
+      { raw: "9403.10.00", normalized: "940310", status: "not_in_list", source: "column", matched: null, matchedDescription: "", exact: false, reason: "First six digits are not on the SONCAP list." },
+      { raw: "9999.99.99", normalized: "999999", status: "review", source: "column", matched: null, matchedDescription: "", exact: false, reason: "Chapter 99 is not a valid HS chapter." }
+    ]
+  }, true);
+});
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function render(data, isDemo) {
+  const codes = Array.isArray(data.codes) ? data.codes : [];
+  const matched = codes.filter((c) => c.status === "match");
+  const notInList = codes.filter((c) => c.status === "not_in_list");
+  const manual = codes.filter((c) => c.status === "review");
+  const allOk = codes.length > 0 && matched.length === codes.length;
+
+  const banner = $("banner");
+  if (codes.length === 0) {
+    banner.className = "banner review";
+    banner.innerHTML = "<h2>No HSN codes found</h2><p>We couldn’t find any HSN codes in an HS CODE / Custom Code column or next to an HS label. Check that it’s the PFI and that the text is readable, then upload it again.</p>";
+  } else if (allOk) {
+    banner.className = "banner ok";
+    banner.innerHTML = "<h2>Match found</h2><p>All " + codes.length + " HSN codes are in the SONCAP list.</p>";
+  } else {
+    const parts = [];
+    if (notInList.length) parts.push(notInList.length + " not in the SONCAP list");
+    if (manual.length) parts.push(manual.length + " need a manual check");
+    banner.className = "banner review";
+    banner.innerHTML = "<h2>Review required</h2><p>" + parts.join(", ") + " (out of " + codes.length + " codes).</p>";
+  }
+
+  if (data.warning) banner.innerHTML += "<p class='warn'>" + esc(data.warning) + "</p>";
+
+  $("rows").innerHTML = codes.map((c) => {
+    const six = esc(c.normalized || "").slice(0, 6);
+    let pill, record;
+    if (c.status === "match") {
+      pill = "<span class='pill match'>Match found</span>";
+      record = "<span class='mono'>" + esc(c.matched) + "</span>" +
+        (c.matchedDescription ? "<div class='desc'>" + esc(c.matchedDescription) + "</div>" : "") +
+        (c.exact === false ? "<div class='desc'>Matched on the first six digits only.</div>" : "");
+    } else if (c.status === "not_in_list") {
+      pill = "<span class='pill review'>Not found</span>";
+      record = "<span class='mono'>Not in list</span>";
+    } else {
+      pill = "<span class='pill check'>Check manually</span>";
+      record = "<span class='mono'>Not confirmed</span>" + (c.reason ? "<div class='reason'>" + esc(c.reason) + "</div>" : "");
+    }
+    const src = c.source === "label" ? "Read from a label" : c.source === "column" ? "Read from HS CODE column" : "";
+    return "<tr>" +
+      "<td><span class='mono'>" + esc(c.raw) + "</span>" +
+        (src ? "<div class='desc'>" + src + "</div>" : "") +
+        (c.description ? "<div class='desc'>" + esc(c.description) + "</div>" : "") + "</td>" +
+      "<td><span class='mono six'>" + six + "</span></td>" +
+      "<td>" + pill + "</td>" +
+      "<td>" + record + "</td>" +
+      "</tr>";
+  }).join("");
+
+  const next = $("next");
+  const note = "<p class='small-note'>" + esc(data.note || "A match only means the code is on the company’s SONCAP HSN list. It does not prove that the product or permit is compliant.") + "</p>";
+  const permits = Array.isArray(data.permits) && data.permits.length
+    ? "<p class='small-note'>SONCAP permits on file: <span class='mono'>" + data.permits.map(esc).join(", ") + "</span></p>" : "";
+  const ignored = Array.isArray(data.excluded) && data.excluded.length
+    ? "<details class='ignored'><summary>" + data.excluded.length + " number(s) ignored as document identifiers</summary><ul>" +
+      data.excluded.map((e) => "<li><span class='mono'>" + esc(e.raw) + "</span> – " + esc(e.reason) + "</li>").join("") + "</ul></details>" : "";
+
+  if (allOk) {
+    next.innerHTML = "<h3>Next step</h3><p style='margin:0'>All codes are on the list. The Form M applier can start the Form M process, after confirming the products and permits.</p>" + permits + note + ignored;
+  } else if (codes.length > 0) {
+    let html = "<h3>What you can do</h3><ul>";
+    if (notInList.length) {
+      html += "<li><strong>Codes marked “Not found”, Option A:</strong> get SONCAP for that HSN. Once the SONCAP list is updated, upload the PFI again.</li>" +
+        "<li><strong>Codes marked “Not found”, Option B:</strong> if it applies to that item, give the supplier the permitted HSN and ask them to re-send the PFI. Then upload the corrected PFI.</li>";
+    }
+    if (manual.length) {
+      html += "<li><strong>Codes marked “Check manually”:</strong> open the PFI and confirm the HS code for that line. We could not be sure what the number was.</li>";
+    }
+    html += "</ul>" + permits + note + ignored +
+      "<div class='actions'><button id='again' class='ghost' type='button'>Upload a corrected PFI</button></div>";
+    next.innerHTML = html;
+    $("again").addEventListener("click", resetForm);
+  } else {
+    next.innerHTML = "<div class='actions' style='margin:0'><button id='again' class='ghost' type='button'>Upload another PFI</button></div>" + ignored;
+    $("again").addEventListener("click", resetForm);
+  }
+
+  $("demoNote").hidden = !isDemo;
+  $("results").hidden = false;
+  $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetForm() {
+  selected = null;
+  fileInput.value = "";
+  $("fileName").textContent = "";
+  checkBtn.disabled = true;
+  $("results").hidden = true;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+</script>
+</body>
+</html>
