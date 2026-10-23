@@ -1,4 +1,12 @@
 {
+"companies": {
+"IEPL": {
+  "name": "Indorama Eleme Petrochemicals Limited",
+  "permits": [
+    "2026DOC0000060402",
+    "2026DOC0000175366",
+    "2026DOC0000122915"
+  ],
   "codes": [
     {
       "hsn": "8537200000",
@@ -2369,4 +2377,16 @@
       "description": "Other articles of iron or steel wire not specified."
     }
   ]
+    },
+    "IEFCL": {
+      "name": "",
+      "permits": [],
+      "codes": []
+    },
+    "iCARE": {
+      "name": "",
+      "permits": [],
+      "codes": []
+    }
+  }
 }
