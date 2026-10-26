@@ -237,22 +237,22 @@ checkBtn.addEventListener("click", async () => {
   }
 });
 
-// $("demo").addEventListener("click", () => {
-//   setStatus("");
-//   render({
-//     allMatched: false,
-//     warning: null,
-//     permits: ["2026DOC0000060402", "2026DOC0000175366", "2026DOC0000122915"],
-//     note: "A match only means the code is on the company’s SONCAP HSN list. It does not prove that the product or permit is compliant.",
-//     excluded: [{ raw: "0803 123 4567", reason: "Appears next to a PFI, phone, fax, account or similar label." }],
-//     codes: [
-//       { raw: "8537.20.00", normalized: "853720", status: "match", source: "column", matched: "8537200000", matchedDescription: "Boards, panels, consoles... for electric control/distributi on. For a voltage greater than 1,000 V", exact: true, reason: null },
-//       { raw: "8501.10.90", normalized: "850110", status: "match", source: "column", matched: "8501100000", matchedDescription: "", exact: false, reason: null },
-//       { raw: "9403.10.00", normalized: "940310", status: "not_in_list", source: "column", matched: null, matchedDescription: "", exact: false, reason: "First six digits are not on the SONCAP list." },
-//       { raw: "9999.99.99", normalized: "999999", status: "review", source: "column", matched: null, matchedDescription: "", exact: false, reason: "Chapter 99 is not a valid HS chapter." }
-//     ]
-//   }, true);
-// });
+$("demo").addEventListener("click", () => {
+  setStatus("");
+  render({
+    allMatched: false,
+    warning: null,
+    permits: ["2026DOC0000060402", "2026DOC0000175366", "2026DOC0000122915"],
+    // note: "A match only means the code is on the company’s SONCAP HSN list. It does not prove that the product or permit is compliant.",
+    excluded: [{ raw: "0803 123 4567", reason: "Appears next to a PFI, phone, fax, account or similar label." }],
+    codes: [
+      { raw: "8537.20.00", normalized: "853720", status: "match", source: "column", matched: "8537200000", matchedDescription: "Boards, panels, consoles... for electric control/distributi on. For a voltage greater than 1,000 V", exact: true, reason: null },
+      { raw: "8501.10.90", normalized: "850110", status: "match", source: "column", matched: "8501100000", matchedDescription: "", exact: false, reason: null }
+      // { raw: "9403.10.00", normalized: "940310", status: "not_in_list", source: "column", matched: null, matchedDescription: "", exact: false, reason: "First six digits are not on the SONCAP list." },
+      // { raw: "9999.99.99", normalized: "999999", status: "review", source: "column", matched: null, matchedDescription: "", exact: false, reason: "Chapter 99 is not a valid HS chapter." }
+    ]
+  }, true);
+});
 
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
