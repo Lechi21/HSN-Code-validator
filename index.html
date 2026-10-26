@@ -247,8 +247,8 @@ $("demo").addEventListener("click", () => {
     excluded: [{ raw: "0803 123 4567", reason: "Appears next to a PFI, phone, fax, account or similar label." }],
     codes: [
       { raw: "8537.20.00", normalized: "853720", status: "match", source: "column", matched: "8537200000", matchedDescription: "Boards, panels, consoles... for electric control/distributi on. For a voltage greater than 1,000 V", exact: true, reason: null },
-      { raw: "8501.10.90", normalized: "850110", status: "match", source: "column", matched: "8501100000", matchedDescription: "", exact: false, reason: null }
-      // { raw: "9403.10.00", normalized: "940310", status: "not_in_list", source: "column", matched: null, matchedDescription: "", exact: false, reason: "First six digits are not on the SONCAP list." },
+      // { raw: "8501.10.90", normalized: "850110", status: "match", source: "column", matched: "8501100000", matchedDescription: "", exact: false, reason: null }
+      { raw: "9403.10.00", normalized: "940310", status: "not_in_list", source: "column", matched: null, matchedDescription: "", exact: false, reason: "First six digits are not on the SONCAP list." }
       // { raw: "9999.99.99", normalized: "999999", status: "review", source: "column", matched: null, matchedDescription: "", exact: false, reason: "Chapter 99 is not a valid HS chapter." }
     ]
   }, true);
@@ -317,7 +317,7 @@ function render(data, isDemo) {
       data.excluded.map((e) => "<li><span class='mono'>" + esc(e.raw) + "</span> – " + esc(e.reason) + "</li>").join("") + "</ul></details>" : "";
 
   if (allOk) {
-    next.innerHTML = "<h3>Next step</h3><p style='margin:0'>All codes are on the list. The Form M applier can start the Form M process, after confirming the products and permits.</p>" + permits + note + ignored;
+    next.innerHTML = "<h3>Next step</h3><p style='margin:0'>All codes are on the list.</p>" + permits + note + ignored;
   } else if (codes.length > 0) {
     let html = "<h3>What you can do</h3><ul>";
     if (notInList.length) {
