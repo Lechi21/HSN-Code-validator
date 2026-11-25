@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PFI SONCAP check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f6f7f4; --surface:#fff; --ink:#17231d; --muted:#5d6b63; --line:#d9dfd9; --green:#146c43; --green-bg:#e3f2ea; --amber:#9a5b00; --amber-bg:#fdf0d5; --accent:#146c43; --on-accent:#fff; --err:#b3261e; --focus:#1d5fd1; }
+  @media (prefers-color-scheme: dark) { :root { --paper:#101612; --surface:#18201b; --ink:#e8eee9; --muted:#9aa8a0; --line:#2c3a32; --green:#5fc58f; --green-bg:#173a28; --amber:#f0b550; --amber-bg:#3b2c0e; --accent:#5fc58f; --on-accent:#0b1a12; --err:#ff8a80; --focus:#7aa8ff; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:400 16px/1.5 "IBM Plex Sans", system-ui, sans-serif; }
+  main { max-width:900px; margin:0 auto; padding:36px 20px 80px; }
+  h1 { font-size:28px; line-height:1.2; font-weight:600; margin:0 0 6px; letter-spacing:-.01em; }
+  .lede { color:var(--muted); margin:0 0 24px; max-width:62ch; }
+  .mono { font-family:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
+  :focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:18px; margin-bottom:16px; }
+  .label { display:block; font-size:14px; color:var(--muted); margin-bottom:8px; }
+
+  .seg { display:flex; flex-wrap:wrap; gap:8px; border:0; margin:0; padding:0; }
+  .seg label { position:relative; }
+  .seg input { position:absolute; opacity:0; inset:0; cursor:pointer; }
+  .seg span { display:block; padding:8px 16px; border:1px solid var(--line); border-radius:6px; font-weight:500; cursor:pointer; }
+  .seg input:checked + span { background:var(--green-bg); border-color:var(--accent); color:var(--green); }
+  .seg input:focus-visible + span { outline:3px solid var(--focus); outline-offset:2px; }
+  .seg small { display:block; font-weight:400; font-size:12px; color:var(--muted); }
+  .seg input:checked + span small { color:var(--green); }
+
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin:-4px -4px 16px; }
+  .tabs button { background:none; border:0; border-bottom:3px solid transparent; border-radius:0; color:var(--muted); padding:10px 14px; font-weight:500; }
+  .tabs button[aria-selected="true"] { color:var(--ink); border-bottom-color:var(--accent); }
+
+  .drop { display:block; position:relative; border:2px dashed var(--line); border-radius:6px; padding:28px 16px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color:var(--accent); background:var(--green-bg); }
+  .drop:focus-within { outline:3px solid var(--focus); outline-offset:2px; }
+  .drop input { position:absolute; opacity:0; width:1px; height:1px; }
+  .drop strong { display:block; font-size:17px; }
+  .drop span { color:var(--muted); font-size:14px; }
+  .file-name { margin-top:8px; font-size:14px; font-weight:500; }
+
+  textarea, input[type=search] { width:100%; font:400 15px "IBM Plex Mono", ui-monospace, monospace; padding:10px 12px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); }
+  textarea { min-height:84px; resize:vertical; }
+  .hint { font-size:13px; color:var(--muted); margin:6px 0 0; }
+
+  button { font:500 15px "IBM Plex Sans", system-ui, sans-serif; padding:10px 18px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:var(--on-accent); cursor:pointer; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button.ghost { background:transparent; color:var(--ink); border-color:var(--line); }
+  button.link { background:none; border:none; color:var(--muted); text-decoration:underline; padding:10px 4px; }
+  .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:center; }
+  #status { margin-top:12px; min-height:22px; color:var(--muted); font-size:14px; }
+  #status.error { color:var(--err); }
+
+  details.browse > summary { cursor:pointer; font-weight:500; }
+  .list { margin-top:12px; max-height:320px; overflow:auto; border:1px solid var(--line); border-radius:6px; }
+  .list button { display:flex; gap:14px; width:100%; text-align:left; background:none; border:0; border-bottom:1px solid var(--line); border-radius:0; color:var(--ink); padding:8px 12px; font-weight:400; font-size:14px; }
+  .list button:hover { background:var(--green-bg); }
+  .list .mono { flex:none; font-weight:500; }
+  .list .d { color:var(--muted); }
+  .empty { padding:14px; color:var(--muted); font-size:14px; }
+
+  #results { margin-top:24px; }
+  .banner { border-radius:6px; padding:14px 18px; border-left:6px solid; }
+  .banner h2 { margin:0 0 2px; font-size:20px; }
+  .banner p { margin:0; }
+  .banner.ok { background:var(--green-bg); border-color:var(--green); }
+  .banner.ok h2 { color:var(--green); }
+  .banner.review { background:var(--amber-bg); border-color:var(--amber); }
+  .banner.review h2 { color:var(--amber); }
+  .warn { margin-top:6px !important; font-size:14px; }
+  .table-wrap { overflow-x:auto; margin-top:16px; background:var(--surface); border:1px solid var(--line); border-radius:6px; }
+  table { border-collapse:collapse; width:100%; min-width:760px; }
+  th, td { text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-weight:600; font-size:14px; color:var(--muted); }
+  tr:last-child td { border-bottom:none; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:99px; font-size:13px; font-weight:500; white-space:nowrap; }
+  .pill.match { background:var(--green-bg); color:var(--green); }
+  .pill.review { background:var(--amber-bg); color:var(--amber); }
+  .pill.check { color:var(--amber); border:1px solid var(--amber); }
+  .desc { color:var(--muted); font-size:13px; }
+  .reason { color:var(--amber); font-size:13px; margin-top:4px; }
+  .next { margin-top:16px; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:16px 18px; }
+  .next h3 { margin:0 0 6px; font-size:16px; }
+  .next ul { margin:0; padding-left:20px; }
+  .next li { margin-bottom:4px; }
+  .small-note { font-size:13px; color:var(--muted); margin:10px 0 0; }
+  :root { --red:#b3261e; --red-bg:#fbe4e2; }
+  @media (prefers-color-scheme: dark) { :root { --red:#ff8a80; --red-bg:#3f1f1d; } }
+  .pill.euc { background:var(--red-bg); color:var(--red); font-weight:600; }
+  .pill.eucmaybe { color:var(--amber); border:1px solid var(--amber); }
+  .pill.clear { color:var(--muted); border:1px solid var(--line); }
+  .tag { display:inline-block; font-size:12px; padding:1px 8px; border-radius:99px; border:1px solid var(--line); color:var(--muted); margin-left:6px; white-space:nowrap; }
+  .tag.red { background:var(--red-bg); border-color:var(--red); color:var(--red); }
+  .euc-alert { margin-top:12px; border-radius:6px; padding:14px 18px; border-left:6px solid var(--red); background:var(--red-bg); }
+  .euc-alert h3 { margin:0 0 4px; font-size:17px; color:var(--red); }
+  .euc-alert p { margin:6px 0 0; font-size:15px; }
+  .euc-alert.maybe { border-left-color:var(--amber); background:var(--amber-bg); }
+  .euc-alert.maybe h3 { color:var(--amber); }
+  .euc-alert.clear { border-left-color:var(--line); background:var(--surface); border:1px solid var(--line); border-left:6px solid var(--green); }
+  .euc-alert.clear h3 { color:var(--green); }
+  select { font:400 15px "IBM Plex Sans", system-ui, sans-serif; padding:9px 10px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); max-width:100%; }
+  .filters { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+  .filters input[type=search] { flex:1 1 220px; width:auto; }
+  .list .row-main { flex:1; }
+  [hidden] { display:none !important; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Check HS codes against SONCAP</h1>
+  <p class="lede">Upload a PFI (PDF, Excel or CSV) or type HS codes. We check the first six digits against the company’s SONCAP list, and every code is also checked against the NSA End-User Certificate (EUC) list.</p>
+
+  <section class="panel">
+    <fieldset class="seg" id="companies" style="margin-bottom:0">
+      <legend class="label">Company SONCAP list</legend>
+      <label><input type="radio" name="company" value="IEPL" checked><span>IEPL<small data-count="IEPL"></small></span></label>
+      <label><input type="radio" name="company" value="IEFCL"><span>IEFCL<small data-count="IEFCL"></small></span></label>
+      <label><input type="radio" name="company" value="iCARE"><span>iCARE<small data-count="iCARE"></small></span></label>
+    </fieldset>
+  </section>
+
+  <section class="panel">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-file" aria-selected="true" aria-controls="pane-file">Upload a file</button>
+      <button role="tab" id="tab-type" aria-selected="false" aria-controls="pane-type">Type HS codes</button>
+    </div>
+
+    <div id="pane-file" role="tabpanel" aria-labelledby="tab-file">
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".pdf,.xlsx,.csv,application/pdf">
+        <strong>Choose a PFI</strong>
+        <span>PDF, Excel (.xlsx) or CSV. Or drag it here.</span>
+        <div class="file-name" id="fileName"></div>
+      </label>
+      <div class="actions"><button id="check" disabled>Check file</button></div>
+    </div>
+
+    <div id="pane-type" role="tabpanel" aria-labelledby="tab-type" hidden>
+      <label class="label" for="manual">HS codes</label>
+      <textarea id="manual" placeholder="8537.20.00, 85011000"></textarea>
+      <p class="hint">Separate codes with commas or new lines. Use 6, 8 or 10 digits.</p>
+      <div class="actions"><button id="checkManual" disabled>Check codes</button></div>
+    </div>
+    <div id="status" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="panel">
+    <details class="browse" id="browse">
+      <summary id="browseTitle">Browse the SONCAP and EUC lists</summary>
+      <fieldset class="seg" id="browseMode" style="margin-top:12px">
+        <legend class="label">List to browse</legend>
+        <label><input type="radio" name="bmode" value="soncap" checked><span>SONCAP list<small id="soncapLabel">selected company</small></span></label>
+        <label><input type="radio" name="bmode" value="euc"><span>NSA EUC list<small id="eucCount"></small></span></label>
+      </fieldset>
+      <div class="filters">
+        <select id="cat" aria-label="EUC category" hidden></select>
+        <input type="search" id="q" placeholder="Search a code, description or category" aria-label="Search the list">
+      </div>
+      <div class="list" id="list"></div>
+      <p class="hint">Select a code to add it to “Type HS codes”.</p>
+    </details>
+  </section>
+
+  <section id="results" hidden>
+    <div id="banner" class="banner"></div>
+    <div id="eucAlert"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>HS code</th><th>First six digits</th><th>SONCAP result</th><th>SONCAP record</th><th>EUC check</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="next" id="next"></div>
+    <p class="hint" id="demoNote" hidden>Sample data, not your document.</p>
+  </section>
+  <p><button id="demo" class="link" type="button">Preview with sample data</button></p>
+</main>
+
+<script>
+/*
+  API (/api/verify)
+  GET  ?company=IEPL            -> { name, count, permits, codes: [{ hsn, description, euc }] }
+  GET  ?list=euc                -> { count, categories, source, retrieved, codes: [{ hsn, description, category, remarks }] }
+  POST multipart: company, plus "pfi" (PDF / .xlsx / .csv) or "manual" (typed codes)
+       -> { warning, permits, note, excluded, codes: [{ raw, normalized,
+            status: "match" | "not_in_list" | "review", source: "column" | "label" | "manual",
+            matched, matchedDescription, exact, reason,
+            euc: null | { level: "listed" | "possible", total, others, matches: [{ code, description, category, remarks }] } }],
+            eucCounts, eucNote, eucSource }
+*/
+const API_URL = "/api/verify";
+const $ = (id) => document.getElementById(id);
+const company = () => document.querySelector("input[name=company]:checked").value;
+let selected = null;
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function setStatus(msg, isError) { const el = $("status"); el.textContent = msg || ""; el.className = isError ? "error" : ""; }
+
+/* ---- tabs ---- */
+function showTab(name) {
+  for (const t of ["file", "type"]) {
+    $("tab-" + t).setAttribute("aria-selected", t === name);
+    $("pane-" + t).hidden = t !== name;
+  }
+  setStatus("");
+}
+$("tab-file").onclick = () => showTab("file");
+$("tab-type").onclick = () => showTab("type");
+
+/* ---- file input ---- */
+function pickFile(f) {
+  if (!f) return;
+  if (/\.xls$/i.test(f.name)) return setStatus("Old .xls files can’t be read. Save it as .xlsx first.", true);
+  if (!/\.(pdf|xlsx|csv)$/i.test(f.name)) return setStatus("Choose a PDF, .xlsx or .csv file.", true);
+  selected = f;
+  $("fileName").textContent = f.name;
+  $("check").disabled = false;
+  setStatus("");
+}
+$("file").addEventListener("change", () => pickFile($("file").files[0]));
+["dragenter", "dragover"].forEach((ev) => $("drop").addEventListener(ev, (e) => { e.preventDefault(); $("drop").classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => $("drop").addEventListener(ev, (e) => { e.preventDefault(); $("drop").classList.remove("over"); }));
+$("drop").addEventListener("drop", (e) => pickFile(e.dataTransfer.files[0]));
+$("manual").addEventListener("input", () => { $("checkManual").disabled = !$("manual").value.trim(); });
+
+/* ---- calling the API ---- */
+async function run(body, busyBtn, msg) {
+  busyBtn.disabled = true;
+  setStatus(msg);
+  $("results").hidden = true;
+  try {
+    body.append("company", company());
+    const res = await fetch(API_URL, { method: "POST", body });
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error((data && data.error) || "The server returned " + res.status + ".");
+    render(data, false);
+    setStatus("");
+  } catch (err) {
+    setStatus("Couldn’t check this. " + err.message, true);
+  } finally {
+    busyBtn.disabled = false;
+  }
+}
+$("check").addEventListener("click", () => {
+  if (!selected) return;
+  const b = new FormData(); b.append("pfi", selected);
+  run(b, $("check"), "Reading the file…");
+});
+$("checkManual").addEventListener("click", () => {
+  const b = new FormData(); b.append("manual", $("manual").value);
+  run(b, $("checkManual"), "Checking…");
+});
+
+/* ---- browse the lists ---- */
+const cache = {};
+let eucList = null;
+const mode = () => document.querySelector("input[name=bmode]:checked").value;
+async function loadList(c) {
+  if (cache[c]) return cache[c];
+  const res = await fetch(API_URL + "?company=" + encodeURIComponent(c));
+  if (!res.ok) throw new Error("list");
+  return (cache[c] = await res.json());
+}
+async function loadEuc() {
+  if (eucList) return eucList;
+  const res = await fetch(API_URL + "?list=euc");
+  if (!res.ok) throw new Error("euc");
+  eucList = await res.json();
+  $("cat").innerHTML = "<option value=''>All categories</option>" + eucList.categories.map((c) => "<option>" + esc(c) + "</option>").join("");
+  return eucList;
+}
+async function drawList() {
+  const q = $("q").value.trim().toLowerCase();
+  const dq = q.replace(/\D/g, "");
+  const hit = (x) => !q || (dq && x.hsn.includes(dq)) || x.description.toLowerCase().includes(q) || (x.category || "").toLowerCase().includes(q);
+  const isEuc = mode() === "euc";
+  $("cat").hidden = !isEuc;
+  $("soncapLabel").textContent = company();
+  try {
+    let rows, total, html;
+    if (isEuc) {
+      const d = await loadEuc();
+      const cat = $("cat").value;
+      $("browseTitle").textContent = "Browse the NSA EUC list (" + d.count + " codes)";
+      rows = d.codes.filter((x) => (!cat || x.category === cat) && hit(x));
+      html = rows.slice(0, 300).map((x) => "<button type='button' data-hsn='" + esc(x.hsn) + "'><span class='mono'>" + esc(x.hsn) + "</span><span class='row-main'><span class='d'>" + esc(x.description) + "</span><span class='tag'>" + esc(x.category) + "</span>" + (x.remarks ? "<div class='d'>" + esc(x.remarks) + "</div>" : "") + "</span></button>").join("");
+      total = "EUC";
+    } else {
+      const c = company();
+      const d = await loadList(c);
+      $("browseTitle").textContent = "Browse the " + c + " SONCAP list (" + d.count + " codes)";
+      rows = d.codes.filter(hit);
+      html = rows.slice(0, 300).map((x) => "<button type='button' data-hsn='" + esc(x.hsn) + "'><span class='mono'>" + esc(x.hsn) + "</span><span class='row-main'><span class='d'>" + esc(x.description) + "</span>" + (x.euc ? "<span class='tag red'>" + (x.euc === "listed" ? "On EUC list" : "Possible EUC") + "</span>" : "") + "</span></button>").join("");
+      total = d.count;
+    }
+    $("list").innerHTML = rows.length
+      ? html + (rows.length > 300 ? "<div class='empty'>Showing 300 of " + rows.length + ". Search to narrow it down.</div>" : "")
+      : "<div class='empty'>" + (total ? "No codes match." : "No codes have been added for " + company() + " yet.") + "</div>";
+  } catch (e) {
+    $("list").innerHTML = "<div class='empty'>Couldn’t load the list.</div>";
+  }
+}
+$("list").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-hsn]");
+  if (!b) return;
+  const m = $("manual");
+  m.value = (m.value.trim() ? m.value.trim() + ", " : "") + b.dataset.hsn;
+  m.dispatchEvent(new Event("input"));
+  showTab("type");
+});
+$("browse").addEventListener("toggle", () => { if ($("browse").open) drawList(); });
+$("q").addEventListener("input", drawList);
+$("cat").addEventListener("change", drawList);
+document.querySelectorAll("input[name=bmode]").forEach((r) => r.addEventListener("change", drawList));
+document.querySelectorAll("input[name=company]").forEach((r) => r.addEventListener("change", () => { $("results").hidden = true; if ($("browse").open) drawList(); }));
+// show how many codes each list holds
+["IEPL", "IEFCL", "iCARE"].forEach((c) => loadList(c).then((d) => { document.querySelector("[data-count=" + c + "]").textContent = d.count + " codes"; }).catch(() => {}));
+loadEuc().then((d) => { $("eucCount").textContent = d.count + " codes"; }).catch(() => {});
+
+/* ---- sample ---- */
+$("demo").addEventListener("click", () => {
+  setStatus("");
+  render({
+    codes: [
+      { raw: "8537.20.00", normalized: "853720", status: "match", source: "column", matched: "8537200000", matchedDescription: "Control panels, over 1,000 V", exact: true, euc: null },
+      { raw: "3102.10.00", normalized: "310210", status: "match", source: "column", matched: "3102100000", matchedDescription: "Urea, whether or not in aqueous solution", exact: true,
+        euc: { level: "listed", total: 1, others: 0, matches: [{ code: "3102100000", description: "Urea, whether or not in aqueous solution", category: "Fertilizer Chemicals", remarks: "" }] } },
+      { raw: "9403.10.00", normalized: "940310", status: "not_in_list", source: "column", euc: null }
+    ],
+    eucSource: { url: "https://euc.nsa.gov.ng/full-hs-codes/", retrieved: "2026-11-23" }
+  }, true);
+});
+
+/* ---- results ---- */
+const SOURCE = { column: "From HS code column", label: "From a label", manual: "Typed in" };
+
+function eucPill(e) {
+  if (!e) return "<span class='pill clear'>Not on EUC list</span>";
+  return e.level === "listed" ? "<span class='pill euc'>On EUC list</span>" : "<span class='pill eucmaybe'>Possible EUC</span>";
+}
+function eucDetail(e) {
+  if (!e) return "";
+  const lead = e.level === "possible" ? "<div class='desc'>Same first six digits as:</div>" : "";
+  const items = e.matches.slice(0, 3).map((x) => "<div class='desc'><span class='mono'>" + esc(x.code) + "</span> " + esc(x.description) + " · " + esc(x.category) + (x.remarks ? " (" + esc(x.remarks) + ")" : "") + "</div>").join("");
+  const more = e.total > 3 ? "<div class='desc'>+ " + (e.total - 3) + " more EUC line" + (e.total - 3 > 1 ? "s" : "") + "</div>" : "";
+  const others = e.others ? "<div class='desc'>" + e.others + " other EUC line" + (e.others > 1 ? "s" : "") + " share these six digits. See the EUC list.</div>" : "";
+  return lead + items + more + others;
+}
+const uniqRaw = (arr) => [...new Set(arr.map((c) => c.raw))].map((r) => "<span class='mono'>" + esc(r) + "</span>").join(", ");
+
+function render(data, isDemo) {
+  const codes = Array.isArray(data.codes) ? data.codes : [];
+  const notInList = codes.filter((c) => c.status === "not_in_list");
+  const manual = codes.filter((c) => c.status === "review");
+  const allOk = codes.length > 0 && !notInList.length && !manual.length;
+  const eucListed = codes.filter((c) => c.euc && c.euc.level === "listed");
+  const eucMaybe = codes.filter((c) => c.euc && c.euc.level === "possible");
+
+  const banner = $("banner");
+  if (!codes.length) {
+    banner.className = "banner review";
+    banner.innerHTML = "<h2>No HS codes found</h2><p>Check that this is the PFI and the text is readable. You can also upload an Excel copy or type the codes.</p>";
+  } else if (allOk) {
+    banner.className = "banner ok";
+    banner.innerHTML = "<h2>SONCAP: match found</h2><p>All " + codes.length + " codes are in the SONCAP list.</p>";
+  } else {
+    const parts = [];
+    if (notInList.length) parts.push(notInList.length + " not in the list");
+    if (manual.length) parts.push(manual.length + " to check manually");
+    banner.className = "banner review";
+    banner.innerHTML = "<h2>SONCAP: review required</h2><p>" + parts.join(", ") + " (of " + codes.length + ").</p>";
+  }
+  if (data.warning) banner.innerHTML += "<p class='warn'>" + esc(data.warning) + "</p>";
+
+  /* EUC alert */
+  const src = data.eucSource ? "<p class='small-note'>EUC list from <span class='mono'>" + esc((data.eucSource.url || "").replace(/^https?:\/\//, "")) + "</span>, read " + esc(data.eucSource.retrieved || "") + ".</p>" : "";
+  let alertHtml = "";
+  if (eucListed.length) {
+    alertHtml = "<div class='euc-alert'><h3>EUC check: " + eucListed.length + " code" + (eucListed.length > 1 ? "s are" : " is") + " on the NSA EUC list</h3>" +
+      "<p>" + uniqRaw(eucListed) + "</p><p>Confirm that an End-User Certificate is held or approved for " + (eucListed.length > 1 ? "these items" : "this item") + " before you order or apply for an import permit.</p>" +
+      (eucMaybe.length ? "<p><strong>Also check:</strong> " + uniqRaw(eucMaybe) + " share" + (eucMaybe.length > 1 ? "" : "s") + " the first six digits with an EUC item.</p>" : "") + src + "</div>";
+  } else if (eucMaybe.length) {
+    alertHtml = "<div class='euc-alert maybe'><h3>EUC check: " + eucMaybe.length + " code" + (eucMaybe.length > 1 ? "s" : "") + " to check</h3>" +
+      "<p>" + uniqRaw(eucMaybe) + " share" + (eucMaybe.length > 1 ? "" : "s") + " the first six digits with an EUC item but a different tariff line. Check whether your product is the controlled item.</p>" + src + "</div>";
+  } else if (codes.length) {
+    alertHtml = "<div class='euc-alert clear'><h3>EUC check: no matches</h3><p>None of these codes are on the NSA EUC list.</p>" + src + "</div>";
+  }
+  $("eucAlert").innerHTML = alertHtml;
+
+  $("rows").innerHTML = codes.map((c) => {
+    let pill, rec;
+    if (c.status === "match") {
+      pill = "<span class='pill match'>Match found</span>";
+      rec = "<span class='mono'>" + esc(c.matched) + "</span>" +
+        (c.matchedDescription ? "<div class='desc'>" + esc(c.matchedDescription) + "</div>" : "") +
+        (c.exact === false ? "<div class='desc'>First six digits only.</div>" : "");
+    } else if (c.status === "not_in_list") {
+      pill = "<span class='pill review'>Not found</span>";
+      rec = "<span class='mono'>Not in list</span>";
+    } else {
+      pill = "<span class='pill check'>Check manually</span>";
+      rec = "<span class='mono'>Not confirmed</span>" + (c.reason ? "<div class='reason'>" + esc(c.reason) + "</div>" : "");
+    }
+    return "<tr><td><span class='mono'>" + esc(c.raw) + "</span>" + (SOURCE[c.source] ? "<div class='desc'>" + SOURCE[c.source] + "</div>" : "") + "</td>" +
+      "<td><span class='mono'>" + esc(c.normalized || "").slice(0, 6) + "</span></td><td>" + pill + "</td><td>" + rec + "</td>" +
+      "<td>" + eucPill(c.euc) + eucDetail(c.euc) + "</td></tr>";
+  }).join("");
+
+  const note = "<p class='small-note'>" + esc(data.note || "A match means the code is on the SONCAP list. It does not prove the product or permit is compliant.") + "</p>" +
+    (codes.length ? "<p class='small-note'>" + esc(data.eucNote || "The EUC check is a screening check. Confirm with the NSA EUC office whether an EUC is required for your actual product.") + "</p>" : "");
+  const permits = data.permits && data.permits.length ? "<p class='small-note'>Permits on file: <span class='mono'>" + data.permits.map(esc).join(", ") + "</span></p>" : "";
+  const ignored = data.excluded && data.excluded.length
+    ? "<p class='small-note'>Ignored as document numbers: <span class='mono'>" + data.excluded.map((e) => esc(e.raw)).join(", ") + "</span></p>" : "";
+
+  let html = "";
+  if (allOk) {
+    html = "<h3>Next step</h3><p style='margin:0'>All codes are on the SONCAP list.</p>";
+  } else if (codes.length) {
+    html = "<h3>What you can do</h3><ul>";
+    if (notInList.length) html += "<li><strong>Not found, Option A:</strong> get SONCAP for that HSN, then check again once the list is updated.</li><li><strong>Not found, Option B:</strong> if it applies, give the supplier the permitted HSN and ask for a corrected PFI.</li>";
+    if (manual.length) html += "<li><strong>Check manually:</strong> confirm that line on the PFI, or type the code in “Type HS codes”.</li>";
+    html += "</ul>";
+  }
+  if (eucListed.length || eucMaybe.length) {
+    html += (html ? "" : "") + "<h3" + (html ? " style='margin-top:14px'" : "") + ">EUC</h3><ul><li>Confirm an End-User Certificate is held or approved for the flagged items before ordering.</li>" +
+      (eucMaybe.length ? "<li>For “Possible EUC” codes, check the product against the EUC description in the table.</li>" : "") + "</ul>";
+  }
+  $("next").innerHTML = html + permits + ignored + note;
+  $("next").hidden = !codes.length;
+
+  $("demoNote").hidden = !isDemo;
+  $("results").hidden = false;
+  $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+</script>
+</body>
+</html>
